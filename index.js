@@ -6,6 +6,7 @@ module.exports = function(opts) {
   opts = opts || {};
 
   var host = opts.host;
+  var appName = opts.appName;
   var env = opts.env;
   var index = opts.index || 'defaultindex';
   var type = opts.type || 'defaultType';
@@ -29,10 +30,11 @@ module.exports = function(opts) {
     items.forEach(function(item) {
       toSend.push({ index:  { _index: index, _type: type } });
       toSend.push({
-        created: item.created.toISOString(),
-        name: item.name,
+        appName: appName,
+        serviceName: item.name,
+        env: env,
         time: item.time,
-        env: env
+        created: item.created.toISOString()
       });
     });
 
@@ -52,7 +54,8 @@ module.exports = function(opts) {
     var mappings = {};
     mappings[type] = {
       properties: {
-        name: { type: 'string', index: 'not_analyzed' },
+        appName: { type: 'string', index: 'not_analyzed' },
+        serviceName: { type: 'string', index: 'not_analyzed' },
         env: { type: 'string', index: 'not_analyzed' },
         time: { type: 'integer' },
         created: { type: 'date'}
