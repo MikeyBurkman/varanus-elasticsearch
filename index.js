@@ -11,6 +11,7 @@ module.exports = function(opts) {
   var index = opts.index || 'defaultindex';
   var type = opts.type || 'defaultType';
   var esLogLevel = opts.esLogLevel || 'info';
+  var separator = opts.separator || '#';
 
   if (!host) {
     throw new Error('Must provide an `opts.host` string');
@@ -34,7 +35,7 @@ module.exports = function(opts) {
       toSend.push(headerItem);
       toSend.push({
         appName: appName,
-        serviceName: item.service + '-' + item.fnName,
+        serviceName: [item.service, item.fnName].join(separator),
         env: env,
         time: item.time,
         created: item.created.toISOString()
