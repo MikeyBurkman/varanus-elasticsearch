@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/MikeyBurkman/varanus-elasticsearch#readme",
   "dependencies": {
-    "elasticsearch": "^11.0.1"
+    "elasticsearch": "~13.3.1"
   }
 }
