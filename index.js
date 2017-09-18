@@ -12,6 +12,10 @@ module.exports = function(opts) {
   var type = opts.type || 'defaultType';
   var esLogLevel = opts.esLogLevel || 'info';
   var separator = opts.separator || '#';
+  var auth = undefined;
+  if (opts.user) {
+    auth = opts.user + ':' + opts.password;
+  }
 
   if (!host) {
     throw new Error('Must provide an `opts.host` string');
@@ -19,7 +23,8 @@ module.exports = function(opts) {
 
   var client = new elasticsearch.Client({
     host: host,
-    log: esLogLevel
+    log: esLogLevel,
+    httpAuth: auth
   });
 
   // The first item for every record we send is always identical, so just create it once
