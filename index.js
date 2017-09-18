@@ -75,7 +75,7 @@ function createIndex(client, index, type) {
   })
   .catch(function(err) {
     // We only care if the error is something other than the index already existing
-    if (err.message.indexOf('IndexAlreadyExistsException') === -1) {
+    if (err.message.indexOf('index_already_exists_exception') === -1) {
       throw err;
     }
   });
