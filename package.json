@@ -1,6 +1,6 @@
 {
   "name": "varanus-elasticsearch",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Elasticsearch destination for Varanus",
   "main": "index.js",
   "scripts": {
