@@ -1,8 +1,11 @@
 {
   "name": "varanus-elasticsearch",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "description": "Elasticsearch destination for Varanus",
   "main": "index.js",
+  "engines": {
+    "node": ">=4"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,6 +24,7 @@
   },
   "homepage": "https://github.com/MikeyBurkman/varanus-elasticsearch#readme",
   "dependencies": {
+    "cron": "~1.3.0",
     "elasticsearch": "~13.3.1"
   }
 }

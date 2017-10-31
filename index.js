@@ -1,38 +1,59 @@
 'use strict';
 
-var elasticsearch = require('elasticsearch');
+const elasticsearch = require('elasticsearch');
+const CronJob = require('cron').CronJob;
+
+const INDEX_TYPES = {
+  single: null,
+  daily: '0 0 0 * * *', // Every day at midnight
+  monthly: '0 0 0 1 * *' // Midnight on the first day of every month
+};
 
 module.exports = function(opts) {
   opts = opts || {};
 
-  var host = opts.host;
-  var appName = opts.appName;
-  var env = opts.env;
-  var index = opts.index || 'defaultindex';
-  var type = opts.type || 'defaultType';
-  var esLogLevel = opts.esLogLevel || 'info';
-  var separator = opts.separator || '#';
+  const host = opts.host;
+  const appName = opts.appName;
+  const env = opts.env;
+  const index = opts.index || 'defaultindex';
+  const type = opts.type || 'defaultType';
+  const esLogLevel = opts.esLogLevel || 'info';
+  const separator = opts.separator || '#';
+  const indexType = opts.indexType || 'single';
 
   if (!host) {
-    throw new Error('Must provide an `opts.host` string');
+    throw new Error('Must provide an "opts.host" string');
   }
 
-  var client = new elasticsearch.Client({
+  if (Object.keys(INDEX_TYPES).indexOf(indexType) === -1) {
+    throw new Error('Invalid "opts.indexType" string; must be one of ' + 
+      JSON.stringify(Object.keys(INDEX_TYPES)));
+  }
+
+  const client = new elasticsearch.Client({
     host: host,
     log: esLogLevel
   });
 
-  // The first item for every record we send is always identical, so just create it once
-  var headerItem = { index:  { _index: index, _type: type } };
+  const indexCronTime = INDEX_TYPES[indexType];
 
-  // At startup, always make sure the index exists
-  var createIndexPromise = createIndex(client, index, type);
+  let indexInfo = newIndex();
+
+  if (indexCronTime) {
+    // Create a new index every so often
+    new CronJob({
+      cronTime: indexCronTime,
+      onTick: function() {
+        indexInfo = newIndex(); 
+      },
+      start: true
+    });
+  }
 
   return function flush(items) {
-
-    var toSend = [];
+    const toSend = [];
     items.forEach(function(item) {
-      toSend.push(headerItem);
+      toSend.push(indexInfo.headerItem);
       toSend.push({
         appName: appName,
         serviceName: [item.service, item.fnName].join(separator),
@@ -42,7 +63,7 @@ module.exports = function(opts) {
       });
     });
 
-    return createIndexPromise // Make sure the index is created before anything else
+    return indexInfo.createIndexPromise // Make sure the index is created before anything else
       .then(function() {
         return client.bulk({
           body: toSend
@@ -51,24 +72,57 @@ module.exports = function(opts) {
 
   };
 
+  function newIndex() {
+    const newIndexName = getCurrentIndexName();
+    return {
+      headerItem: { 
+        index: {
+          _index: newIndexName, 
+          _type: type 
+        } 
+      },
+      createIndexPromise: createIndexInES(client, newIndexName, type)
+    };
+  }
+
+  // Gets the name of the index that any record created right now should use
+  function getCurrentIndexName() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const date = now.getDate();
+
+    switch (indexType) {
+      case 'single': 
+        return index;
+      case 'monthly':
+          return `${index}-${year}-${month}`;
+      case 'daily':
+        return `${index}-${year}-${month}-${date}`;
+      default:
+        throw new Error('Should never be here if indexType is validated: ' + indexType);
+    }
+  }
+
 };
 
 // Creates the necessary Elasticsearch index if it doesn't alreay exist
-function createIndex(client, index, type) {
+function createIndexInES(client, indexName, type) {
 
-  var mappings = {};
-  mappings[type] = {
-    properties: {
-      appName: { type: 'string', index: 'not_analyzed' },
-      serviceName: { type: 'string', index: 'not_analyzed' },
-      env: { type: 'string', index: 'not_analyzed' },
-      time: { type: 'integer' },
-      created: { type: 'date'}
+  const mappings = {
+    [type]: {
+      properties: {
+        appName: { type: 'string', index: 'not_analyzed' },
+        serviceName: { type: 'string', index: 'not_analyzed' },
+        env: { type: 'string', index: 'not_analyzed' },
+        time: { type: 'integer' },
+        created: { type: 'date'}
+      }
     }
   };
 
   return client.indices.create({
-    index: index,
+    index: indexName,
     body: {
       mappings: mappings
     }
