@@ -17,7 +17,7 @@ module.exports = function(opts) {
   const esLogLevel = opts.esLogLevel;
   const separator = opts.separator || '#';
 
-  const sendToEs = esSender({
+  const sendToEs = esSender.buildSender({
     host: host,
     indexName: indexName,
     indexType: indexType,
