@@ -10,7 +10,7 @@ module.exports = function(opts) {
   const appName = opts.appName;
   const env = opts.env;
   const indexName = opts.indexName;
-  const indexType = opts.indexType;
+  const indexType = opts.indexType; // 'monthly', 'daily', or 'single'
   const recordType = opts.recordType;
 
   // Optional
@@ -24,11 +24,11 @@ module.exports = function(opts) {
     recordType: recordType,
     esLogLevel: esLogLevel,
     indexShape: {
-      appName: { type: 'string', index: 'not_analyzed' },
-      serviceName: { type: 'string', index: 'not_analyzed' },
-      env: { type: 'string', index: 'not_analyzed' },
-      time: { type: 'integer' },
-      created: { type: 'date'}
+      appName: { type: 'keyword', index: true },
+      serviceName: { type: 'keyword', index: true },
+      env: { type: 'keyword', index: true },
+      created: { type: 'date', index: true},
+      time: { type: 'integer' }
     }
   });
 
